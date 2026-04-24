@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SITTAX — Controle de Tarefas</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #F47B20;
+    --orange-dark: #D96A10;
+    --orange-light: #FFA04D;
+    --orange-glow: rgba(244,123,32,0.18);
+    --black: #0D0D0D;
+    --surface: #161616;
+    --surface2: #1F1F1F;
+    --surface3: #282828;
+    --border: rgba(244,123,32,0.18);
+    --border-strong: rgba(244,123,32,0.4);
+    --text: #F0F0F0;
+    --text-muted: #888;
+    --text-dim: #555;
+    --radius: 6px;
+    --radius-lg: 10px;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { background: var(--black); }
+  body { font-family: 'Barlow', sans-serif; background: var(--black); color: var(--text); min-height: 100vh; font-size: 14px; line-height: 1.5; }
+
+  /* HEADER */
+  .header { background: var(--surface); border-bottom: 1px solid var(--border-strong); padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100; }
+  .logo { font-family: 'Barlow Condensed', sans-serif; font-size: 22px; font-weight: 700; letter-spacing: 0.08em; color: var(--orange); text-transform: uppercase; }
+  .logo span { color: var(--text); }
+  .header-actions { display: flex; gap: 10px; align-items: center; }
+
+  /* BUTTONS */
+  .btn { font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; padding: 8px 18px; border-radius: var(--radius); border: none; cursor: pointer; transition: all 0.15s; letter-spacing: 0.02em; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--orange); color: #000; }
+  .btn-primary:hover { background: var(--orange-light); transform: translateY(-1px); }
+  .btn-ghost { background: transparent; color: var(--text-muted); border: 1px solid var(--border-strong); }
+  .btn-ghost:hover { border-color: var(--orange); color: var(--orange); }
+  .btn-danger { background: transparent; color: #e05555; border: 1px solid rgba(224,85,85,0.3); font-size: 12px; padding: 5px 10px; }
+  .btn-danger:hover { background: rgba(224,85,85,0.1); }
+
+  /* TABS */
+  .tabs-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; display: flex; align-items: flex-end; gap: 4px; }
+  .tab { font-family: 'Barlow', sans-serif; font-size: 13px; font-weight: 600; padding: 12px 20px; background: transparent; border: none; cursor: pointer; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; letter-spacing: 0.04em; text-transform: uppercase; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+  .tab-count { display: inline-block; background: var(--surface3); color: var(--text-muted); font-size: 11px; padding: 1px 6px; border-radius: 99px; margin-left: 6px; }
+  .tab.active .tab-count { background: var(--orange-glow); color: var(--orange); }
+
+  /* MAIN */
+  .main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* STATS */
+  .stats-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 18px; cursor: pointer; transition: border-color 0.15s; }
+  .stat-card:hover { border-color: var(--border-strong); }
+  .stat-card.active-filter { border-color: var(--orange); box-shadow: 0 0 0 1px var(--orange); }
+  .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .stat-val { font-size: 26px; font-weight: 700; color: var(--text); line-height: 1; }
+  .stat-val.orange { color: var(--orange); }
+  .stat-val.amber { color: #F4A620; }
+  .stat-val.green { color: #4CAF7D; }
+  .stat-val.red { color: #E05555; }
+
+  /* TOOLBAR */
+  .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+  .search-box { position: relative; flex: 1; min-width: 200px; max-width: 340px; }
+  .search-box input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 13px; padding: 8px 12px 8px 34px; outline: none; transition: border-color 0.15s; }
+  .search-box input:focus { border-color: var(--orange); }
+  .search-box input::placeholder { color: var(--text-dim); }
+  .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--text-dim); }
+  select.filter-sel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-muted); font-family: 'Barlow', sans-serif; font-size: 13px; padding: 8px 12px; outline: none; cursor: pointer; transition: border-color 0.15s; }
+  select.filter-sel:focus { border-color: var(--orange); color: var(--text); }
+  .toolbar-spacer { flex: 1; }
+  .results-count { font-size: 12px; color: var(--text-dim); }
+
+  /* TABLE */
+  .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: var(--surface2); padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid var(--border); white-space: nowrap; cursor: pointer; user-select: none; transition: color 0.12s; }
+  thead th:hover { color: var(--orange); }
+  thead th.sorted { color: var(--orange); }
+  thead th .sa { margin-left: 4px; opacity: 0.5; font-size: 10px; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td { padding: 10px 14px; vertical-align: middle; }
+  .col-num { width: 80px; font-weight: 700; color: var(--orange); font-size: 13px; }
+  .col-title { }
+  .col-date { width: 110px; white-space: nowrap; }
+  .col-status { width: 145px; }
+  .col-tickets { width: 170px; }
+  .col-actions { width: 80px; text-align: center; }
+  .title-text { color: var(--text); font-size: 13px; line-height: 1.4; }
+  .date-text { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+  .ticket-tag { display: inline-block; background: rgba(244,123,32,0.08); border: 1px solid rgba(244,123,32,0.2); color: var(--orange); border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 600; margin: 1px 2px 1px 0; }
+  .ticket-more { display: inline-block; background: var(--surface3); color: var(--text-dim); border-radius: 4px; padding: 1px 6px; font-size: 11px; }
+
+  /* STATUS BADGE */
+  .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; transition: opacity 0.15s; border: none; white-space: nowrap; }
+  .status-badge:hover { opacity: 0.8; }
+  .status-badge .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .s-aberto { background: rgba(244,123,32,0.12); color: var(--orange); }
+  .s-aberto .dot { background: var(--orange); }
+  .s-andamento { background: rgba(244,166,32,0.12); color: #F4A620; }
+  .s-andamento .dot { background: #F4A620; }
+  .s-concluido { background: rgba(76,175,125,0.12); color: #4CAF7D; }
+  .s-concluido .dot { background: #4CAF7D; }
+  .s-bloqueado { background: rgba(224,85,85,0.12); color: #E05555; }
+  .s-bloqueado .dot { background: #E05555; }
+
+  /* EMPTY */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--text-dim); }
+  .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+
+  /* PAGINATION */
+  .pagination { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; font-size: 12px; color: var(--text-muted); }
+  .pag-btns { display: flex; gap: 4px; }
+  .pag-btns button { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text-muted); padding: 5px 10px; font-size: 12px; font-family: 'Barlow', sans-serif; cursor: pointer; transition: all 0.12s; min-width: 30px; }
+  .pag-btns button:hover:not(:disabled) { border-color: var(--orange); color: var(--orange); }
+  .pag-btns button:disabled { opacity: 0.3; cursor: default; }
+  .pag-btns button.active { background: var(--orange); border-color: var(--orange); color: #000; font-weight: 700; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--radius-lg); width: 100%; max-width: 560px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.2s ease; }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); }
+  .modal-title { font-family: 'Barlow Condensed', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: 0.04em; color: var(--text); text-transform: uppercase; }
+  .modal-close { background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; line-height: 1; padding: 2px 6px; border-radius: 4px; transition: color 0.12s; }
+  .modal-close:hover { color: var(--orange); }
+  .modal-body { padding: 22px; }
+  .form-row { margin-bottom: 18px; }
+  .form-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 7px; }
+  .form-label span { color: var(--orange); }
+  .form-input, .form-textarea, .form-select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); font-family: 'Barlow', sans-serif; font-size: 13px; padding: 10px 12px; outline: none; transition: border-color 0.15s; }
+  .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: var(--orange); }
+  .form-input::placeholder, .form-textarea::placeholder { color: var(--text-dim); }
+  .form-textarea { resize: vertical; min-height: 60px; }
+  .form-select { cursor: pointer; }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding: 16px 22px; border-top: 1px solid var(--border); }
+  .tickets-input-wrap { display: flex; gap: 8px; }
+  .tickets-input-wrap input { flex: 1; }
+  .ticket-tags-preview { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
+  .ticket-remove { background: rgba(244,123,32,0.08); border: 1px solid rgba(244,123,32,0.2); color: var(--orange); border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: background 0.12s; }
+  .ticket-remove:hover { background: rgba(244,123,32,0.2); }
+
+  /* DETAIL */
+  .detail-section { margin-bottom: 18px; }
+  .detail-section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-dim); margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+  .detail-val { font-size: 14px; color: var(--text); line-height: 1.5; }
+  .detail-num { font-size: 22px; font-weight: 700; color: var(--orange); }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 28px; right: 28px; background: var(--surface2); border: 1px solid var(--border-strong); border-left: 3px solid var(--orange); border-radius: var(--radius); padding: 12px 18px; font-size: 13px; color: var(--text); z-index: 9999; opacity: 0; transform: translateY(10px); transition: all 0.2s ease; pointer-events: none; max-width: 280px; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">SIT<span>TAX</span> — Controle de Tarefas</div>
+  <div class="header-actions">
+    <button class="btn btn-primary" onclick="openAddModal()">
+      <svg width="14" height="14" fill="none" viewBox="0 0 16 16"><path d="M8 2v12M2 8h12" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>
+      Nova Tarefa
+    </button>
+  </div>
+</header>
+
+<div class="tabs-bar">
+  <button class="tab active" id="tab-SITTAX" onclick="switchTab('SITTAX')">SITTAX <span class="tab-count" id="cnt-SITTAX">0</span></button>
+  <button class="tab" id="tab-BYTOKEN" onclick="switchTab('BYTOKEN')">BYTOKEN <span class="tab-count" id="cnt-BYTOKEN">0</span></button>
+</div>
+
+<div class="main">
+  <div class="stats-row">
+    <div class="stat-card" onclick="filterStat('')" id="stat-total"><div class="stat-label">Total</div><div class="stat-val orange" id="s-total">0</div></div>
+    <div class="stat-card" onclick="filterStat('Aberto')" id="stat-Aberto"><div class="stat-label">Aberto</div><div class="stat-val" id="s-Aberto">0</div></div>
+    <div class="stat-card" onclick="filterStat('Em andamento')" id="stat-Emandamento"><div class="stat-label">Em andamento</div><div class="stat-val amber" id="s-Em andamento">0</div></div>
+    <div class="stat-card" onclick="filterStat('Concluído')" id="stat-Concluido"><div class="stat-label">Concluído</div><div class="stat-val green" id="s-Concluído">0</div></div>
+    <div class="stat-card" onclick="filterStat('Bloqueado')" id="stat-Bloqueado"><div class="stat-label">Bloqueado</div><div class="stat-val red" id="s-Bloqueado">0</div></div>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 16 16" fill="none"><circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 10l3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      <input type="text" id="search" placeholder="Buscar tarefa ou ticket..." oninput="applyFilters()">
+    </div>
+    <select class="filter-sel" id="statusFilter" onchange="applyFilters()">
+      <option value="">Todos os status</option>
+      <option>Aberto</option>
+      <option>Em andamento</option>
+      <option>Concluído</option>
+      <option>Bloqueado</option>
+    </select>
+    <select class="filter-sel" id="dateFilter" onchange="applyFilters()">
+      <option value="">Todas as datas</option>
+    </select>
+    <button class="btn btn-ghost" onclick="clearFilters()">Limpar</button>
+    <div class="toolbar-spacer"></div>
+    <select class="filter-sel" id="perPage" onchange="applyFilters()">
+      <option value="15">15 / página</option>
+      <option value="30">30 / página</option>
+      <option value="50">50 / página</option>
+      <option value="100">100 / página</option>
+    </select>
+    <span class="results-count" id="results-count"></span>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('num')">Nº <span class="sa" id="arr-num">↕</span></th>
+          <th onclick="sortBy('title')">Título da Tarefa <span class="sa" id="arr-title">↕</span></th>
+          <th onclick="sortBy('date')">Data de Abertura <span class="sa" id="arr-date">↕</span></th>
+          <th>Status</th>
+          <th>Tickets Vinculados</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    <span id="pag-info"></span>
+    <div class="pag-btns" id="pag-btns"></div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="addModal" onclick="closeModalOutside(event,'addModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="addModalTitle">Nova Tarefa</div>
+      <button class="modal-close" onclick="closeModal('addModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId">
+      <div class="form-row">
+        <label class="form-label">Nº da Tarefa <span>*</span></label>
+        <input class="form-input" type="number" id="f-num" placeholder="Ex: 22500">
+      </div>
+      <div class="form-row">
+        <label class="form-label">Título da Tarefa <span>*</span></label>
+        <textarea class="form-textarea" id="f-title" placeholder="Descreva a tarefa..." rows="3"></textarea>
+      </div>
+      <div class="form-row-2">
+        <div class="form-row" style="margin-bottom:0">
+          <label class="form-label">Data de Abertura <span>*</span></label>
+          <input class="form-input" type="date" id="f-date">
+        </div>
+        <div class="form-row" style="margin-bottom:0">
+          <label class="form-label">Status</label>
+          <select class="form-select" id="f-status">
+            <option>Aberto</option>
+            <option>Em andamento</option>
+            <option>Concluído</option>
+            <option>Bloqueado</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:18px">
+        <label class="form-label">Produto</label>
+        <select class="form-select" id="f-tab">
+          <option>SITTAX</option>
+          <option>BYTOKEN</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label class="form-label">Tickets Vinculados</label>
+        <div class="tickets-input-wrap">
+          <input class="form-input" type="text" id="f-ticket-input" placeholder="Número do ticket (Enter para adicionar)">
+          <button class="btn btn-ghost" onclick="addTicketTag()">+ Add</button>
+        </div>
+        <div class="ticket-tags-preview" id="ticket-tags"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('addModal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTask()">Salvar Tarefa</button>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal" onclick="closeModalOutside(event,'detailModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Detalhes da Tarefa</div>
+      <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-section">
+        <div class="detail-section-title">Identificação</div>
+        <div class="detail-num" id="d-num"></div>
+        <div class="detail-val" id="d-title" style="margin-top:8px;font-size:15px;font-weight:600;line-height:1.4"></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Data de Abertura</div>
+        <div class="detail-val" id="d-date"></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Status atual</div>
+        <div id="d-status-badge"></div>
+        <div style="margin-top:12px">
+          <label class="form-label">Alterar status</label>
+          <select class="form-select" id="d-status-sel" onchange="updateStatusFromDetail()">
+            <option>Aberto</option>
+            <option>Em andamento</option>
+            <option>Concluído</option>
+            <option>Bloqueado</option>
+          </select>
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Tickets vinculados</div>
+        <div id="d-tickets"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="openEditFromDetail()">Editar</button>
+      <button class="btn btn-primary" onclick="closeModal('detailModal')">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- STATUS QUICK MODAL -->
+<div class="modal-overlay" id="statusModal" onclick="closeModalOutside(event,'statusModal')">
+  <div class="modal" style="max-width:320px">
+    <div class="modal-header">
+      <div class="modal-title">Alterar Status</div>
+      <button class="modal-close" onclick="closeModal('statusModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom:8px;font-size:13px;color:var(--text-muted)" id="status-task-label"></div>
+      <div style="display:flex;flex-direction:column;gap:8px" id="status-options"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STATUSES = ['Aberto','Em andamento','Concluído','Bloqueado'];
+const STATUS_CLASS = {'Aberto':'s-aberto','Em andamento':'s-andamento','Concluído':'s-concluido','Bloqueado':'s-bloqueado'};
+
+// [num, title, date_dd/mm/yyyy, tickets]
+let data = {
+  SITTAX: [[20088,"Registro C190 Apresentando Valor Negativo No SPED - Arquivo De Integração Domínio","05/02/2026","45246 | 45531"],[20095,"Consulta De Faturamento Em Lote Não Consulta Todas As Empresas","05/02/2026","34444"],[20110,"[BackEnd] - Não Alterou CST No SPED Domínio","06/02/2026","45294"],[20126,"Recupera - Duplicando Valor da Receita","06/02/2026","45447"],[20118,"Recupera - Erro Ao Transmitir - Divergência De Valor De PIS","06/02/2026","45424"],[20139,"Declaração de Faturamento Não levando Receita Exterior","06/02/2026","45459"],[20149,"Homologação Bonito-BA","09/02/2026","45506"],[20150,"Erro ao cadastrar escritório filho no principal","09/02/2026","46641"],[20154,"Erro ao retificar pela SITTAX - A empresa já se encontra transmitida","09/02/2026","45553 | 45805 | 48827"],[20152,"SITTAX Cancelando as NFC-e importadas autorizadas","09/02/2026","45545"],[20155,"Erro - Não foi possível salvar a API Key SIEG v2","09/02/2026","45575 | 45989 | 45947 | 45845 | 47209"],[20167,"Recupera - Erro ao calcular dados do período","09/02/2026","45709"],[20170,"Consulta SIEG não trás as notas para o sistema","09/02/2026","45725 | 47662"],[20171,"Base de cálculo do Relatório de Conferência divergente da Apuração XML","09/02/2026","45734"],[20172,"Apuração em Lote - Sistema não está respeitando a personalização criada na aba de Arquivos das configurações da empresa","09/02/2026","45779"],[20175,"Empresas do Regime MEI Não Listadas na Aba de Transmitidas do Painel do Contador","09/02/2026","45783"],[20191,"Notas de Serviços Tomados lidas no campo de saída","10/02/2026","45905"],[20204,"Não Importando Notas de Entrada SEFAZ RS","10/02/2026","34811"],[20209,"Homologação Vila Velha - ES (ISS Retino/Não Retido)","10/02/2026","46296"],[20218,"Erro Timeout SIEG","11/02/2026","46945"],[20219,"Homologar XML Portal Nacional - Valor EXTERIOR","11/02/2026","46364 | 47368 | 47322 | 47244 | 47295 | 46780 | 46743"],[20220,"Registro de Importação de Notas","11/02/2026","38532"],[20252,"Erro ao Clicar em Recalcular Guia DIFAL","12/02/2026","46540"],[20259,"Homologação Osasco-SP","12/02/2026","46691"],[20260,"Divergência de CPP e ICMS ao transmitir","12/02/2026","46704"],[20269,"Divergência de Valor da Receita - Arredondamento indevido","12/02/2026","46369 | 47960 | 49419"],[20298,"Erro ao solicitar crédito: Não foi possível localizar crédito disponível para o período.","13/02/2026","48705 | 49109 | 49234 | 49230 | 49589 | 53683"],[20310,"Homologação Leitura Correta de Valor - NFC-e","13/02/2026","47967"],[20336,"Inconsistências de CFOP Indevida na Apuração por XML","18/02/2026","46828"],[20357,"Erro ao Transmitir por XML","18/02/2026","48204"],[20366,"Erro ao alterar Plano","19/02/2026","0"],[20385,"Valores dos Impostos Incorretos no Relatório de Conferência","19/02/2026","46726"],[20402,"[Backend] - Tributando ICMS e ISS Indevidamente após ultrapassar o Sublimite do Simples Nacional","20/02/2026","46938"],[20427,"Recupera - Erro ao solicitar crédito: Não foi possível alterar a procuração.","23/02/2026","47699 | 46975 | 49359 | 50352"],[20445,"Erro - O código de serviço 702 não pode ser adicionado, pois faz parte de um cadastro global.","23/02/2026","47600"],[20450,"Erro transmissão - Para o estabelecimento 0001","24/02/2026","47118 | 47797 | 48573 | 50309 | 53471"],[20452,"Erro de transmissão - A soma dos valores das atividades está diferente do valor total de receita do Pa.","24/02/2026","47329"],[20454,"Erro de transmissão - Divergência de ICMS","24/02/2026","47779 | 47694 | 49166 | 47320 | 47284 | 48012 | 48500"],[20456,"Erro de transmissão - Divergência de Impostos ICMS, PIS e COFINS","24/02/2026","49028"],[20459,"Erro de transmissão - Erro Desconhecido","24/02/2026","47835"],[20467,"Bug Relatório de Conferência - Não respeitando a Configuração de Anexo","24/02/2026","49167 | 47197 | 53063 | 53441 | 53939"],[20474,"Erro ao acessar tela de apuração","24/02/2026","48585"],[20476,"Homologação Evento de Cancelamento NFS-e - Portal Nacional","25/02/2026","46550 | 48914"],[20478,"Erro de Transmissão - Não foi possível transmitir pelo SERPRO","25/02/2026","49168 | 49235 | 49747"],[20481,"Classificando NCM incorretamente como Isenção/Redução, sem haver regra criada","25/02/2026","48835"],[20484,"Bug - Sugestões de PIS/COFINS ou ICMS da filial constando ao acessar a Matriz","25/02/2026","49104 | 47213"],[20487,"Divergência para notas emitidas com CFOP 5403","25/02/2026","40098 | 49810"],[20491,"Recupera - Erro calcular e ao transmitir: A soma dos valores das receitas é diferente do valor da apuração.","25/02/2026","49229"],[20520,"CFOP 5124 ser aceito quando lançado como Outros e Lançamento para indústria em Locação/Outras","26/02/2026","49222"],[20522,"Não buscando notas de saída SEFAZ SC","26/02/2026","47705 | 51442"],[20523,"Acusando que o Certificado Não possui Autorização para Acessar as Notas na SEFAZ-RS","26/02/2026","49037"],[20527,"Homologação Brasília - NFS-e cancelada","26/02/2026","43870"],[20528,"Homologação Piracicaba-SP - NFS-e Cancelada","26/02/2026","45606"],[20530,"Divergência no valor do DAS no Painel do contador com a apuração por XML e guia emitida","26/02/2026","36602 | 48255"],[20533,"Homologação Bauru - ISS Retido","26/02/2026","45945"],[20534,"Bug ao Ativar Empresas","26/02/2026","0"],[20539,"ISS Outro Município - Não Respeitando o Código Adicionado","26/02/2026","47111"],[20549,"Homologação Inhapim-MG","27/02/2026","47288"],[20660,"Erro ao Importar CT-e","03/03/2026","49604 | 49519"],[20665,"[BackEnd] - Erro ao trazer Declaração PGDAS após transmissão","03/03/2026","49496 | 49583 | 47341"],[20673,"[Front-End] Aba de Selecionar Escritório Abrindo Indevidamente","03/03/2026","0"],[20684,"[BackEnd] - Erro ao Transmitir - Divergência de valores de todos os impostos","03/03/2026","49658"],[20714,"[BackEnd] - Erro ao Transmitir - Divergência de Valores de ISS - Alíquota Fixa","04/03/2026","47421 | 50845"],[20716,"Erro ao Gerar Guia do DIFAL","04/03/2026","49814"],[20720,"[BackEnd] - Erro Transmissão Apuração XML - Benefícios de PIS e COFINS cadastrados","04/03/2026","47800"],[20717,"[BackEnd] - Erro ao Acessar Empresa - Apuração XML","04/03/2026","47337"],[20742,"Erro Desconhecido - Divergência de totais de VENDAS e DEVOLUÇÕES","05/03/2026","47459"],[20748,"Homologar Notas Não Importando","05/03/2026","47893"],[20760,"[BackEnd] - Erro de Valores no Relatório de Conferência","05/03/2026","48351"],[20761,"Botão de Excluir Crédito do DIFAL Sumiu","05/03/2026","48673"],[20789,"Livro de Entradas apresenta soma dos itens da nota no resumo por CFOP","06/03/2026","49182 | 57180"],[20791,"Inconsistência na exibição de quebra de sequência entre Apuração por XML (nova tela) e relatório de inconsistência","06/03/2026","50184 | 50147"],[20792,"Sistema aplica data fim de ST indevida para NCMs no estado de SP","06/03/2026","50156"],[20795,"[BackEnd] - Erro ao gerar guia do DIFAL de MG – validação de inscrição estadual","06/03/2026","49352"],[20796,"[BackEnd] - Erro ao importar planilha para cadastro de empresas em lote","06/03/2026","49353 | 53312 | 53272"],[20806,"[BackEnd] - Apuração por XML não considera notas de devolução no período","09/03/2026","50182 | 50262 | 50266 | 50258 | 50219 | 50205 | 50337 | 50883 | 49552 | 50665 | 50754 | 50785"],[20808,"[BackEnd] - Transmissão realizada via SITTAX apresentada como Transmitida por fora na apuração por XML","09/03/2026","50484 | 50445 | 51799"],[20819,"Homologação Januaria-MG","09/03/2026","49730"],[20821,"Importar NFC-e na Bahia - Ignorar a trava infProt","09/03/2026","48791 | 50486"],[20824,"[Front-End] - Corrigir Mensagem de Exibição de Ausência de Faturamento","10/03/2026","0"],[20831,"Homologação Pitimbu-PB","10/03/2026","49043"],[20836,"[BackEnd] - Apuração por XML não apresenta receitas e impostos no período 01/2026","10/03/2026","48994"],[20838,"[BackEnd] - NFS-e corrompidas no arquivo de integração Domínio – período 05/2025","10/03/2026","49200"],[20840,"[BackEnd] - Divergência na exibição da alíquota efetiva na Apuração por XML e Relatório de Conferência","10/03/2026","50882"],[20851,"Cadastrar API sistema TRON","11/03/2026","49954"],[20871,"Homologar leitura de XML em lote - São Bernardo do Campo-SP","11/03/2026","51029 | 50626 | 51014 | 51189"],[20892,"Melhoria na projeção do Fator R para incluir receita do exterior","11/03/2026","49719"],[20896,"[BackEnd] - Valor incorreto enviado como Sujeito ao Fator R na transmissão do período 02/2026","11/03/2026","49739"],[20905,"Nome do arquivo do Extrato replicando configuração do DAS","12/03/2026","47013"],[20910,"[Front-End] - Painel do contador não atualiza quantitativo ao filtrar tipo de transmissão","12/03/2026","0"],[20911,"[BackEnd] - Erro ao importar certificado digital – Chave privada não localizada","12/03/2026","47453"],[20912,"[Front-End] - Aba Financeiro do cadastro do escritório não carrega informações de boletos","12/03/2026","0"],[20917,"[BackEnd] - Erro ao alterar retenção de ISS na nota fiscal","12/03/2026","51462 | 51423"],[20935,"Homologação Tag de Dedução Rio de Janeiro-RJ","13/03/2026","50037"],[20948,"[Front-End] - Painel do Contador indica inconsistências indevidas na apuração","13/03/2026","51555 | 53802"],[20954,"[BackEnd] - Falha na importação de NFS-e no período 02/2026","13/03/2026","51709 | 51740 | 51453 | 51917 | 51832 | 52354"],[21003,"[Front-End] - Divergência na exibição da receita líquida no Painel do Contador","16/03/2026","52122"],[21072,"[BackEnd] - Erro na transmissão por XML em empresas com devolução","17/03/2026","52160 | 52287 | 52229"],[21074,"[BackEnd] - Falha na importação de NFS-e (TXT 004) de São Paulo/SP","17/03/2026","52742"],[21081,"[BackEnd] - Falha na importação de NFS-e (TXT) de Barueri/SP","18/03/2026","51735"],[21107,"[BackEnd] - Erro transmissão - Para o estabelecimento 0001 - 02/2026","19/03/2026","52969"],[21110,"[BackEnd] - Arquivo de integração Domínio não inclui NFS-e – período 02/2026","19/03/2026","52409 | 53268 | 53491 | 54106"],[21111,"Homologação de XML em lote de NFS-e do Portal Nacional","19/03/2026","52506 | 52500 | 51758 | 52237 | 53271 | 53489 | 53628 | 49640 | 55960"],[21113,"[BackEnd] - Erro Desconhecido - Divergências no cálculo","19/03/2026","52453 | 52195 | 52865 | 53342 | 53544"],[21118,"[BackEnd] - Recupera - Valor negativo indevido de PIS/COFINS – período 11/2023","19/03/2026","51334"],[21122,"[BackEnd] - Erro ao acessar Notas de Entrada na aba de documentos fiscais","19/03/2026","51946"],[21123,"[BackEnd] - Recupera - Erro calcular e ao transmitir - 01/2023","19/03/2026","51969"],[21124,"[BackEnd] - Erro de divergência de impostos na transmissão do período 02/2026","19/03/2026","52486 | 52490 | 53483"],[21126,"[BackEnd] - E-mail de transmissão enviado sem anexos","19/03/2026","52521"],[21137,"[BackEnd] - NFC-e não reconhece evento de cancelamento na importação – período 02/2026","20/03/2026","52195"],[21153,"Homologação Divergência de valores nas NFS-e por casas decimais – período 11/2025","20/03/2026","53245"],[21158,"[BackEnd] - Quebra de sequência indevida para NFC-e modelo 65 série 4 entre períodos consecutivos","23/03/2026","50596"],[21164,"[BackEnd] - Erro na importação da planilha de faturamento – campo Locação/Outras","23/03/2026","51104"],[21184,"[BackEnd] - Divergência na base de cálculo do ICMS para devoluções no relatório de conferência","23/03/2026","52269"],[21185,"[BackEnd] - Erro na geração de arquivo XML de integração com configuração de Arquivos ativa","23/03/2026","52278"],[21206,"[BackEnd] - Inversão de comportamento nos botões Retido e Não Retido na seleção em lote","24/03/2026","53050 | 53875"],[21207,"[BackEnd] - Erro na transmissão por divergência de ICMS entre SITTAX e PGDAS – período 02/2026","24/03/2026","53084"],[21214,"Erro ao acessar guias emitidas no SITTAX ST","24/03/2026","53480"],[21216,"[BackEnd] - Falha de retorno na integração via API e erro no botão de consulta de empresas","25/03/2026","52922"],[21219,"[BackEnd] - Transmissão automática sendo realizada pela apuração antiga ao invés da apuração por XML","25/03/2026","53045"],[21223,"Solicitação de exclusão em massa de notas fiscais – período 10/2025 a 02/2026","25/03/2026","53200"],[21228,"[BackEnd] - Erro de transmissão - A soma dos valores das atividades está diferente do valor total de receita do Pa.","25/03/2026","53215 | 53160 | 54183"],[21232,"[BackEnd] - CFOP não convertido na geração do arquivo XML de integração","25/03/2026","53488"],[21234,"[BackEnd] - Falha na classificação em lote de NFS-e de entrada – período 02/2026","25/03/2026","53503 | 56051"],[21238,"[BackEnd] - Divergência na atribuição de CST de PIS/COFINS para NCM 2402.20.00","25/03/2026","24016"],[21239,"[FrontEnd] - Barra de rolagem movimentando-se automaticamente na seleção de empresas","25/03/2026","53562"],[21251,"Inconsistência na exibição de divergências na tela de Hiperautomação","26/03/2026","53323"],[21252,"Controle manual da aplicação de isenção de ICMS no Simples Nacional com alerta de validação por UF","26/03/2026","52908"],[21293,"Divergência de valores no Painel do Contador – aba Transmitidas","26/03/2026","53732 | 53957 | 54393 | 52006"],[21296,"[BackEnd] - Mensagem indevida de certificado vencido na apuração por XML","26/03/2026","53740"],[21298,"Solicitação de exclusão total de notas fiscais na base","26/03/2026","53753"],[21306,"[BackEnd] - Falha na importação de CF-e – período 12/2024","27/03/2026","53756"],[21320,"Homologação Aplicação indevida de desconto em NFS-e – período 02/2026","27/03/2026","53776"],[21330,"[BackEnd] - Erro na emissão em lote de DANFE – Notas de Entrada período 04/2025","27/03/2026","53787"],[21336,"Homologação Inconsistência na leitura de retenção de ISS em NFS-e NOVA VENECIA-ES","27/03/2026","53796"],[21349,"[BackEnd] - CT-e com CFOP 5352 sendo considerado como ST em operações interestaduais","30/03/2026","46285"],[21350,"[BackEnd] - Campo Tipo de Item sem opções ao criar Tipo de Item por CFOP","30/03/2026","53728"],[21352,"Logs de Transmissão para Validação de Inconsistência","30/03/2026","53549"],[21353,"[BackEnd] - Erro na transmissão por divergência de ICMS – período 02/2026","30/03/2026","52882"],[21360,"Homologação Evento de Cancelamento NFS-e Portal Nacional","30/03/2026","42766"],[21361,"Necessidade de implementação para tributação de NFS-e no Anexo II","30/03/2026","50475"],[21371,"[BackEnd] - Erro ao acessar a tela de apuração por XML em empresas do comércio","30/03/2026","50488"],[21378,"[BackEnd] - Divergência no totalizador por CFOP no livro de saídas – período 02/2026","30/03/2026","50090"],[21379,"Verificar origem de importação de NF-e não localizada na SIEG","30/03/2026","53548"],[21380,"Solicitação de log de aceite de exceções – NCM 21069090","30/03/2026","53866"],[21383,"[BackEnd] - Sugestão de exceção de ICMS considerando UF incorreta (PR ao invés de SC)","30/03/2026","52847"],[21392,"[BackEnd] - Falha na segregação de ISS por município em NFS-e com mesmo código de serviço","30/03/2026","52422 | 48905"],[21448,"[BackEnd] - Divergência entre mensagem de busca de notas via SIEG e notas efetivamente baixadas","31/03/2026","49619 | 46945"],[21450,"Alteração Cadastral de CNPJ para CPF – Cliente Jovenilton Correa Conde","31/03/2026","53897"],[21467,"[BackEnd] - Alteração Indevida de CFOP para 5405 no Arquivo SPED após Parametrização de Exceção de ICMS","31/03/2026","54006"],[21481,"Homologação Trindade-GO Classificando Incorretamente Notas Não Retidas como Retidas","01/04/2026","54097"],[21485,"[BackEnd] - Alteração Indevida de Valores na Apuração Travada Após Atualização do Sistema","01/04/2026","54137 | 54546"],[21488,"[BackEnd] - Erro ao Filtrar Notas de Saída por CFOP","01/04/2026","54112 | 55783 | 55452 | 56834"],[21489,"Homologação Três Rios-RJ Classificando Incorretamente Notas Não Retidas como Retidas","01/04/2026","54172"],[21497,"Excluir o recebimento do período 02/2026","02/04/2026","53626"],[21504,"Homologação CURITIBANOS-SC - Leitura incorreta da retenção de ISS na importação de NFS-e","02/04/2026","54245"],[21515,"[BackEnd] - Ausência do registro H005 no SPED Fiscal – erro de validação no bloco H","02/04/2026","53330"],[21524,"[BackEnd] - Falha no Preenchimento Automático da Data de Competência nas NFS-e Importadas","02/04/2026","54298"],[21525,"[BackEnd] - Município Incorreto na Guia do DIFAL","02/04/2026","54301"],[21529,"[BackEnd] - Erro na transmissão em cenário com benefício de ICMS (isenção/redução) para lançamento manual","02/04/2026","54388 | 55236"],[21531,"[BackEnd] - Valores Negativos de DAS e Receita na Tela de Apuração por XML","02/04/2026","40586"],[21540,"Enquadramento Indevido na Declaração para Empresa com Código de Serviço de Transporte","06/04/2026","54401"],[21544,"Devolução de Compra Aparecendo em Entrada e Saída","06/04/2026","54196"],[21548,"[BackEnd] - Falha na Importação de NFS-e no Período 03/2026","06/04/2026","54538"],[21554,"[BackEnd] - Sistema Não Exibe Todos os Itens de Troca de CFOP na Aba de Inconsistências","06/04/2026","54556"],[21557,"[BackEnd] - Importação de NFS-e com Valor Zerado no Período 03/2026","06/04/2026","54437 | 54586"],[21587,"[BackEnd] - Importação de NFS-e Classificando Incorretamente ISS Não Retido como Retido Ceres-GO","06/04/2026","54464 | 54536"],[21588,"[BackEnd] - Erro de Transmissão por Campo Inválido, Lançamentos Automáticos Indevidos em Locação/Outros","06/04/2026","54508"],[21589,"Solicitação de reprocessamento em lote de NFS-e para todas as empresas do escritório","06/04/2026","54519"],[21597,"[BackEnd] - Quebra de Sequência da NFS-e 276 Sendo Repetida Indevidamente nos Períodos Subsequentes","06/04/2026","54668"],[21607,"[FrontEnd] - Falha na persistência da data de competência em NFS-e","07/04/2026","54703"],[21644,"[BackEnd] - Erro ao abrir guia do DIFAL","08/04/2026","55035 | 55105 | 55087 | 55042 | 55271 | 55333 | 56044 | 56868 | 56817 | 56094 | 56713 | 57336"],[21647,"Reprocessamento de Notas do Período 03/2026 – Escritório BWA","08/04/2026","55096"],[21650,"[BackEnd] - Valores de Receita e DAS dos Períodos 01/2026 e 02/2026 Zerados no Faturamento","08/04/2026","50723"],[21655,"Melhoria Ajustar início do cálculo do RBT12 para considerar a Data de Atividade","08/04/2026","55151"],[21656,"[BackEnd] - Eventos de Cancelamento de NFC-e Não Considerados na Importação","08/04/2026","54708"],[21667,"Reprocessamento de Notas do Período 03/2026 – Escritório CONTABILIDADE DIPLOMATA LTDA","08/04/2026","55182"],[21668,"[BackEnd] - Enquadramento Tributário Incorreto na Transmissão de Notas de Serviço com Código 070501","08/04/2026","55048"],[21669,"[BackEnd] - Transmissão Automática Realizada em Data Divergente da Configurada pelo Cliente","08/04/2026","55184"],[21673,"[BackEnd] - Base de Cálculo Zerada em Itens de NFC-e com CFOP 5933 na Tela de Apuração por XML","08/04/2026","54823"],[21694,"Homologação Novo layout TXT Modelo PMB004 - Barueri-SP","09/04/2026","55301 | 56944"],[21702,"[BackEnd] - Relatório de Conferência sem CFOPs em 01/2025 e em Branco em 02/2025","09/04/2026","55403"],[21703,"Reprocessamento de Notas do Período 03/2026 – Escritório ADVYS CONTABILIDADE LTDA","09/04/2026","55423"],[21709,"[BackEnd] - CFOP Incorreto em Item de NF-e de Devolução de Venda Após Aplicação de Exceção de ICMS","09/04/2026","54848 | 56539"],[22021,"[BackEnd] - NFS-e Não reconhecendo a UF - Goiânia-GO","10/04/2026","55649"],[22024,"Divergência entre Valor Conferido no Sistema e Valor Transmitido no PGDAS do Período 02/2026","10/04/2026","55650"],[22034,"[BackEnd] - Reprocessamento de Notas Excluindo os Registros ao Invés de Reprocessá-los","10/04/2026","0"],[22036,"[BackEnd] - Divergência entre Valores Apurados pelo Sistema e pelo PGDAS na Transmissão – ICMS, PIS e COFINS","10/04/2026","55867"],[22037,"Reprocessamento de Notas do Período 03/2026 – Escritório ORGANIZACAO CONTABIL C.D. S/S LTDA","10/04/2026","55794"],[22039,"Reprocessamento de Notas do Período 03/2026 – Escritório DANIEL HENRIQUE NASCIMENTO SANTOS","10/04/2026","55821"],[22089,"[BackEnd] - Erro desconhecido - Divergência de valores - 03/2026","13/04/2026","56102 | 56685 | 56512 | 57257 | 57732 | 58179"],[22100,"[BackEnd] - Erro HTTP 504 Timeout ao Acessar Tela de Apuração por XML","13/04/2026","56173"],[22107,"[BackEnd] - Divergência no Valor de IPI entre o Sistema e o PGDAS Impedindo a Transmissão","13/04/2026","56116"],[22111,"Melhoria - Valores Negativos de DAS e Receita na Tela de Apuração por XML Cenário com Isenção/Redução","13/04/2026","40586"],[22118,"[BackEnd] - Reprocessamento de Notas do Período 03/2026 – Escritório LIPPI ASSESSORIA CONTABIL LTDA.","13/04/2026","56204"],[22133,"[FrontEnd] - Erro ao Alterar Retenção de ISS em NFS-e de Entradas Classificadas como Serviços","13/04/2026","56158 | 56247"],[22136,"[BackEnd] - Sistema Considerando Valor Incorreto de Receita na Apuração por Regime de Caixa","13/04/2026","56344 | 56113 | 56399 | 56719 | 56792 | 57517 | 57683 | 58015 | 58043 | 58084 | 58088 | 58172 | 58200"],[22150,"[BackEnd] - Erro Object Reference Not Set to an Instance of an Object ao Acessar Tela de Apuração por XML","14/04/2026","0"],[22172,"[BackEnd] - Sistema Solicitando Adição de Folha de Pagamento da Filial Indevidamente na Apuração por XML","14/04/2026","56484"],[22183,"[BackEnd] - Erro transmissão - Para o estabelecimento 0001 - 03/2026","14/04/2026","56424"],[22184,"Reprocessamento de Notas do Período 03/2026 – Escritório SCRITA SOLUCOES EMPRESARIAIS LTDA","14/04/2026","56426"],[22206,"Busca de Notas SEFAZ SC - Saídas","14/04/2026","56446"],[22213,"[BackEnd] - Falha na Importação do Arquivo de Integração do SITTAX no IOB e do Arquivo SPED","14/04/2026","56564"],[22257,"[BackEnd] - Transmissão pelo SITTAX Ignorando Segregação de Receitas entre Anexo III Com e Sem Fator R","15/04/2026","56718"],[22258,"[BackEnd] - Erro Usuário Não Localizado ao Tentar Redefinir Senha em Base de ST","15/04/2026","56873"],[22282,"[BackEnd] - Falha na importação de notas de entrada sem registro em fila – período 03/2026","15/04/2026","56831 | 57016 | 57017 | 57032 | 56968"],[22286,"[BackEnd] - Erro de Transmissão por Campo Inválido - receitasAtividade/valor","15/04/2026","56946 | 57179 | 57316 | 57929 | 58023 | 58187 | 58118 | 58230 | 58198"],[22290,"[BackEnd] - Erro de devoluções inexistentes na transmissão – período 03/2026","15/04/2026","56994"],[22292,"[BackEnd] - Erro ao acessar apuração por XML devido a atividade duplicada/incorreta no cadastro da empresa","15/04/2026","57014 | 57468"],[22293,"Reprocessamento de Notas do Período 03/2026 – Escritório EPX CONTABILIDADE E CONSULTORIA LTDA","15/04/2026","57030"],[22319,"[BackEnd] - Erro de transmissão - A soma dos valores das atividades está diferente do valor total de receita do Pa - 03/2026","16/04/2026","57176 | 57755 | 58079"],[22321,"[BackEnd] - Divergências entre Relatório do Sistema e Declaração PGDAS na Transmissão pela Opção Personalizado","16/04/2026","55425"],[22335,"[BackEnd] - Falha na importação de NF-e específicas – período 03/2026","16/04/2026","57125"],[22336,"[BackEnd] - Erro na transmissão por campo inválido percentualReducao – período 03/2026","16/04/2026","57130"],[22339,"[BackEnd] - Erro na transmissão por divergência na soma das receitas (mercado interno x exterior) – período 03/2026","16/04/2026","57135"],[22341,"[BackEnd] - Sistema Não Salva Nova Tag Criada na Aba de Arquivos das Configurações da Empresa","16/04/2026","57224 | 58086"],[22347,"Homologação Sistema Não Respeitando Opção de Dedução nas NFS-e Importadas","16/04/2026","57263"],[22353,"[BackEnd] - Divergência entre Valores Apurados pelo Sistema e pelo PGDAS Impedindo a Transmissão – COFINS, CSLL, CPP, IRPJ e PIS","16/04/2026","57381"],[22379,"[BackEnd] - Sistema Não Considerando Notas no Cálculo do DIFAL","17/04/2026","57542 | 57625 | 57649 | 57851 | 57880 | 57620 | 57945 | 57946 | 57956 | 57973 | 57991 | 58013 | 58157 | 58194 | 58199 | 58216"],[22392,"Divergência entre Soma dos Impostos Individuais e Valor Total Exibido na Tela de Apuração por XML","20/04/2026","56310"],[22405,"[BackEnd] - Divergência no Valor de ICMS entre o Sistema e o PGDAS Impedindo a Transmissão","20/04/2026","57960 | 57788"],[22408,"[BackEnd] - Recupera - Divergência entre Relatório e Painel nos Valores de PIS/COFINS no Período 09/2025","20/04/2026","58061"],[22409,"[BackEnd] - Relatório de Apuração com Inconsistências nos Valores e Gráfico Divergente do Painel","20/04/2026","58064"],[22411,"[BackEnd] - Erro de Transmissão por Campo codOutroMunicipio e outraUf Inválidos na Atividade 34","20/04/2026","58067"],[22418,"Solicitação de Log de Alteração da Configuração Tributa ISS","20/04/2026","58094"],[22421,"[BackEnd] - XML de Inutilização Não Alterando Status da Nota Autorizada no Sistema","22/04/2026","56471"],[22425,"[BackEnd] - Projeção Exibida como Zerada Mesmo com Folha de Pagamento e Faturamento Preenchidos","22/04/2026","56698"],[22426,"[BackEnd] - Falha na Importação de Notas via SIEG com Retorno de Nenhum XML Encontrado","22/04/2026","58111"],[22428,"[BackEnd] - Sistema Não Reconhecendo NFS-e 57 na Importação do Período 03/2026","22/04/2026","55414"],[22433,"[BackEnd] - NFS-e Importadas Sendo Reconhecidas como Canceladas Indevidamente","22/04/2026","0"],[22434,"[BackEnd] - Bloqueio Indevido de Acesso ao Período Ago/2025 na Tela Antiga de Apuração","22/04/2026","45889"],[22436,"[BackEnd] - Sistema Informando Ausência de Notas no Período 03/2026 Mesmo com Notas Disponíveis na SEFAZ RS","22/04/2026","49037"],[22445,"[BackEnd] - Devolução Não Deduzida do Faturamento na Transmissão e Horário Incorreto nas Declarações","22/04/2026","58145"],[22451,"[BackEnd] - Painel Principal Não Exibindo Valor a Restituir de ICMS ST para Imposto Classificado como DIFAL","22/04/2026","57919"],[22453,"[BackEnd] - Divergência nos Valores de ICMS e ISS entre o Sistema e o PGDAS Impedindo a Transmissão","22/04/2026","58204"],[22454,"[BackEnd] - Evento de Cancelamento Não Aplicado nas Notas 267 e 264 Após Importação","22/04/2026","58214"],[22461,"[BackEnd] - Falha na Importação de NFS-e no Período 03/2026 e Desaparecimento de Notas Previamente Importadas","22/04/2026","58224"],[22481,"[BackEnd] - Relatório de conferência sem Resumo SITTAX em competências anteriores","23/04/2026","57717"],[22491,"[BackEnd] - Inconsistência no reconhecimento de recebimento no regime caixa","23/04/2026","58345"]],
+  BYTOKEN: [[22189,"[BackEnd] - Lista de Agentes Incompleta ao Compartilhar Certificados","14/04/2026","56487"],[22195,"[BackEnd] - Inconsistência ao Instalar ou Desinstalar Grande Quantidade de Certificados pelo App Bytoken V3","14/04/2026","56371"],[22196,"Cliente Não Recebe Avisos por E-mail de Certificados a Vencer","14/04/2026","56392"],[22268,"Procurações não estão baixando quando o cliente faz pela primeira vez a solicitação para baixar","15/04/2026","57009"],[22269,"Melhoria na Bytoken para troca de cliente sem encerramento de sessão","15/04/2026","57015"],[22273,"Ajuste na exibição do usuário no monitoramento (Nome e Descrição)","15/04/2026","57020"],[22276,"Correção do cálculo de Último acesso na tela Controle Agentes","15/04/2026","57037"],[22277,"Ausência de botão para alteração de senha na plataforma","15/04/2026","57041"],[22278,"Problema de usabilidade em resolução 1360x768 (100% de zoom)","15/04/2026","57042"],[22348,"[BackEnd] - Erro ao Tentar Excluir Grupo Vazio pelo Agente Ana Vitória","16/04/2026","57269"],[22356,"Relatório de Ações Exibindo Nome da Empresa no Campo de Identificação da Máquina","16/04/2026","57425"],[22357,"Logs da Plataforma sem Detalhamento Suficiente no Novo Layout","16/04/2026","57451"],[22358,"Certificados Deixando de Estar Disponíveis no Agente ao Longo do Tempo – Empresa Planning","16/04/2026","57455"],[22380,"Filtro por Origem Ausente na Aba de Controle de Certificados","17/04/2026","57679"]]
+};
+
+// date dd/mm/yyyy -> sortable string yyyymmdd
+function dateToSort(d) {
+  if(!d) return '';
+  const p = d.split('/');
+  return p.length === 3 ? p[2]+p[1]+p[0] : d;
+}
+
+let statusMap = {};
+let activeTab = 'SITTAX';
+let sortKey = 'num', sortDir = 1;
+let page = 1;
+let tempTickets = [];
+let detailNum = null;
+
+function getItems(tab) {
+  return (data[tab]||[]).map(r => ({
+    num: parseInt(r[0]), title: r[1], date: r[2], tickets: String(r[3]),
+    status: statusMap[parseInt(r[0])] || 'Aberto'
+  }));
+}
+
+function switchTab(t) {
+  activeTab = t;
+  page = 1;
+  document.getElementById('statusFilter').value = '';
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.id === 'tab-'+t));
+  document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-filter'));
+  populateDateFilter();
+  applyFilters();
+}
+
+function populateDateFilter() {
+  const dates = [...new Set((data[activeTab]||[]).map(r => r[2]))].sort((a,b) => dateToSort(a).localeCompare(dateToSort(b)));
+  const sel = document.getElementById('dateFilter');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Todas as datas</option>' +
+    dates.map(d => `<option value="${d}"${d===cur?' selected':''}>${d}</option>`).join('');
+}
+
+function clearFilters() {
+  document.getElementById('search').value = '';
+  document.getElementById('statusFilter').value = '';
+  document.getElementById('dateFilter').value = '';
+  document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-filter'));
+  page = 1;
+  applyFilters();
+}
+
+function filterStat(s) {
+  document.getElementById('statusFilter').value = s;
+  document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-filter'));
+  const ids = {'':`stat-total`,'Aberto':'stat-Aberto','Em andamento':'stat-Emandamento','Concluído':'stat-Concluido','Bloqueado':'stat-Bloqueado'};
+  const el = document.getElementById(ids[s]);
+  if(el) el.classList.add('active-filter');
+  page = 1;
+  applyFilters();
+}
+
+function sortBy(k) {
+  if(sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = 1; }
+  applyFilters();
+}
+
+function applyFilters() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const sf = document.getElementById('statusFilter').value;
+  const df = document.getElementById('dateFilter').value;
+  const pp = parseInt(document.getElementById('perPage').value);
+
+  ['SITTAX','BYTOKEN'].forEach(t => {
+    document.getElementById('cnt-'+t).textContent = (data[t]||[]).length;
+  });
+
+  const allItems = getItems(activeTab);
+  const counts = { total: allItems.length };
+  STATUSES.forEach(s => counts[s] = allItems.filter(i => i.status === s).length);
+  document.getElementById('s-total').textContent = counts.total;
+  STATUSES.forEach(s => document.getElementById('s-'+s).textContent = counts[s]);
+
+  let items = allItems.filter(i => {
+    if(q && !String(i.num).includes(q) && !i.title.toLowerCase().includes(q) && !i.tickets.toLowerCase().includes(q)) return false;
+    if(sf && i.status !== sf) return false;
+    if(df && i.date !== df) return false;
+    return true;
+  });
+
+  items.sort((a,b) => {
+    let av = a[sortKey], bv = b[sortKey];
+    if(sortKey === 'date') { av = dateToSort(av); bv = dateToSort(bv); }
+    if(typeof av === 'string') return av.localeCompare(bv,'pt') * sortDir;
+    return (av - bv) * sortDir;
+  });
+
+  ['num','title','date'].forEach(k => {
+    document.getElementById('arr-'+k).textContent = sortKey===k ? (sortDir>0?'↑':'↓') : '↕';
+  });
+
+  const total = items.length;
+  const totalPages = Math.max(1, Math.ceil(total/pp));
+  if(page > totalPages) page = totalPages;
+  const start = (page-1)*pp;
+  const pageItems = items.slice(start, start+pp);
+
+  document.getElementById('results-count').textContent = `${total} tarefa${total!==1?'s':''} encontrada${total!==1?'s':''}`;
+
+  const tbody = document.getElementById('tbody');
+  if(!pageItems.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">◎</div><div>Nenhuma tarefa encontrada</div></div></td></tr>';
+  } else {
+    tbody.innerHTML = pageItems.map(i => {
+      const tkts = i.tickets === '0' ? [] : i.tickets.split('|').map(t=>t.trim()).filter(Boolean);
+      const tktHtml = !tkts.length
+        ? '<span style="color:var(--text-dim);font-size:11px">—</span>'
+        : tkts.slice(0,3).map(t=>`<span class="ticket-tag">${t}</span>`).join('') +
+          (tkts.length>3?`<span class="ticket-more">+${tkts.length-3}</span>`:'');
+      return `<tr onclick="openDetail(${i.num})">
+        <td class="col-num">#${i.num}</td>
+        <td class="col-title"><div class="title-text">${i.title}</div></td>
+        <td class="col-date"><span class="date-text">${i.date}</span></td>
+        <td class="col-status">
+          <button class="status-badge ${STATUS_CLASS[i.status]}" onclick="openStatusModal(event,${i.num})">
+            <span class="dot"></span>${i.status}
+          </button>
+        </td>
+        <td class="col-tickets">${tktHtml}</td>
+        <td class="col-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-danger" onclick="deleteTask(${i.num})">Excluir</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  const btns = document.getElementById('pag-btns');
+  let html = `<button ${page===1?'disabled':''} onclick="goPage(${page-1})">‹</button>`;
+  let s2=Math.max(1,page-2), e2=Math.min(totalPages,s2+4);
+  if(e2-s2<4) s2=Math.max(1,e2-4);
+  for(let p2=s2;p2<=e2;p2++) html+=`<button class="${p2===page?'active':''}" onclick="goPage(${p2})">${p2}</button>`;
+  html+=`<button ${page===totalPages?'disabled':''} onclick="goPage(${page+1})">›</button>`;
+  btns.innerHTML = html;
+  document.getElementById('pag-info').textContent = `Mostrando ${start+1}–${Math.min(start+pp,total)} de ${total}`;
+}
+
+function goPage(p) { page=p; applyFilters(); }
+
+function openStatusModal(e,num) {
+  e.stopPropagation();
+  const item = getItems(activeTab).find(i=>i.num===num);
+  document.getElementById('status-task-label').textContent = '#'+num;
+  document.getElementById('status-options').innerHTML = STATUSES.map(s=>
+    `<button onclick="setStatus(${num},'${s}')" style="text-align:left;padding:10px 14px;border-radius:6px;border:1px solid ${item.status===s?'var(--orange)':'var(--border)'};background:${item.status===s?'var(--orange-glow)':'transparent'};cursor:pointer;display:flex;align-items:center;gap:8px">
+      <span class="status-badge ${STATUS_CLASS[s]}" style="pointer-events:none"><span class="dot"></span>${s}</span>
+      ${item.status===s?'<span style="margin-left:auto;color:var(--orange);font-size:12px">✓ atual</span>':''}
+    </button>`
+  ).join('');
+  document.getElementById('statusModal').classList.add('open');
+}
+
+function setStatus(num,s) { statusMap[num]=s; closeModal('statusModal'); applyFilters(); showToast(`Status atualizado: "${s}"`); }
+
+function openDetail(num) {
+  const item = getItems(activeTab).find(i=>i.num===num);
+  if(!item) return;
+  detailNum = num;
+  document.getElementById('d-num').textContent = '#'+item.num;
+  document.getElementById('d-title').textContent = item.title;
+  document.getElementById('d-date').textContent = item.date;
+  document.getElementById('d-status-badge').innerHTML = `<span class="status-badge ${STATUS_CLASS[item.status]}"><span class="dot"></span>${item.status}</span>`;
+  document.getElementById('d-status-sel').value = item.status;
+  const tkts = item.tickets==='0'?[]:item.tickets.split('|').map(t=>t.trim()).filter(Boolean);
+  document.getElementById('d-tickets').innerHTML = tkts.length
+    ? `<div style="display:flex;flex-wrap:wrap;gap:5px">${tkts.map(t=>`<span class="ticket-tag">${t}</span>`).join('')}</div>`
+    : '<span style="color:var(--text-dim);font-size:13px">Sem tickets vinculados</span>';
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function updateStatusFromDetail() {
+  if(detailNum===null) return;
+  const s = document.getElementById('d-status-sel').value;
+  statusMap[detailNum]=s;
+  const item = getItems(activeTab).find(i=>i.num===detailNum);
+  document.getElementById('d-status-badge').innerHTML=`<span class="status-badge ${STATUS_CLASS[s]}"><span class="dot"></span>${s}</span>`;
+  applyFilters(); showToast('Status atualizado');
+}
+
+function openEditFromDetail() { closeModal('detailModal'); const item=getItems(activeTab).find(i=>i.num===detailNum); if(item) openAddModal(item); }
+
+function openAddModal(item) {
+  tempTickets=[];
+  if(item) {
+    document.getElementById('addModalTitle').textContent='Editar Tarefa';
+    document.getElementById('editId').value=item.num;
+    document.getElementById('f-num').value=item.num;
+    document.getElementById('f-title').value=item.title;
+    // convert dd/mm/yyyy -> yyyy-mm-dd for input[type=date]
+    const p=item.date.split('/');
+    document.getElementById('f-date').value=p.length===3?`${p[2]}-${p[1]}-${p[0]}`:'';
+    document.getElementById('f-status').value=item.status;
+    document.getElementById('f-tab').value=activeTab;
+    tempTickets=item.tickets==='0'?[]:item.tickets.split('|').map(t=>t.trim()).filter(Boolean);
+  } else {
+    document.getElementById('addModalTitle').textContent='Nova Tarefa';
+    document.getElementById('editId').value='';
+    document.getElementById('f-num').value='';
+    document.getElementById('f-title').value='';
+    document.getElementById('f-date').value='';
+    document.getElementById('f-status').value='Aberto';
+    document.getElementById('f-tab').value=activeTab;
+  }
+  renderTicketTags();
+  document.getElementById('addModal').classList.add('open');
+}
+
+document.getElementById('f-ticket-input').addEventListener('keydown',function(e){ if(e.key==='Enter'){e.preventDefault();addTicketTag();} });
+
+function addTicketTag() {
+  const inp=document.getElementById('f-ticket-input');
+  const val=inp.value.trim();
+  if(val&&!tempTickets.includes(val)) { tempTickets.push(val); renderTicketTags(); }
+  inp.value=''; inp.focus();
+}
+function removeTicketTag(i) { tempTickets.splice(i,1); renderTicketTags(); }
+function renderTicketTags() {
+  document.getElementById('ticket-tags').innerHTML=tempTickets.map((t,i)=>
+    `<span class="ticket-remove"><span>${t}</span><span style="font-size:14px;line-height:1" onclick="removeTicketTag(${i})">×</span></span>`
+  ).join('');
+}
+
+function saveTask() {
+  const num=parseInt(document.getElementById('f-num').value);
+  const title=document.getElementById('f-title').value.trim();
+  const dateRaw=document.getElementById('f-date').value; // yyyy-mm-dd
+  const status=document.getElementById('f-status').value;
+  const tab=document.getElementById('f-tab').value;
+  const editId=document.getElementById('editId').value;
+  if(!num||!title||!dateRaw){showToast('Preencha os campos obrigatórios');return;}
+  // convert to dd/mm/yyyy
+  const dp=dateRaw.split('-');
+  const date=`${dp[2]}/${dp[1]}/${dp[0]}`;
+  const tickets=tempTickets.length?tempTickets.join(' | '):'0';
+  if(editId) {
+    const oldNum=parseInt(editId);
+    ['SITTAX','BYTOKEN'].forEach(t=>{data[t]=(data[t]||[]).filter(r=>parseInt(r[0])!==oldNum);});
+    statusMap[num]=status; if(oldNum!==num) delete statusMap[oldNum];
+  } else { statusMap[num]=status; }
+  if(!data[tab]) data[tab]=[];
+  const exists=(data[tab]||[]).some(r=>parseInt(r[0])===num);
+  if(exists&&!editId){showToast('Número já existe nesta aba');return;}
+  data[tab].push([num,title,date,tickets]);
+  data[tab].sort((a,b)=>parseInt(a[0])-parseInt(b[0]));
+  closeModal('addModal');
+  if(tab!==activeTab) switchTab(tab); else { populateDateFilter(); applyFilters(); }
+  showToast(editId?'Tarefa atualizada!':'Tarefa criada!');
+}
+
+function deleteTask(num) {
+  if(!confirm(`Excluir tarefa #${num}?`)) return;
+  data[activeTab]=(data[activeTab]||[]).filter(r=>parseInt(r[0])!==num);
+  delete statusMap[num];
+  populateDateFilter(); applyFilters(); showToast('Tarefa excluída');
+}
+
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function closeModalOutside(e,id){if(e.target.id===id)closeModal(id);}
+
+function showToast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+populateDateFilter();
+applyFilters();
+</script>
+</body>
+</html>
